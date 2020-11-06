@@ -4,8 +4,8 @@ import { get } from 'axios'
 import { apiUrl, useHardcodeData } from '../constants/config'
 import assets from '../mocks/assets.json'
 import ReactGA from 'react-ga'
-import { useMediaQuery } from '@material-ui/core'
 import { TOGGLE_FILTER, toggleFilterReducer } from './filters'
+import { useLocalStorage } from './localStore'
 /*
 Example usage:
 import {useContext} from 'react'
@@ -26,12 +26,14 @@ const initialState = {
   loading: false,
   assets: assets,
   selectedFilters: {},
-  prefersDarkMode: false,
+  prefersDarkMode: window.localStorage.darkmode === 'true',
 }
 const store = createContext()
 const { Provider } = store
 
 const StateProvider = ({ children }) => {
+  const [storedDarkMode, setDarkMode] = useLocalStorage('darkmode')
+  console.log(storedDarkMode)
   const [state, dispatch] = useReducer((state, action) => {
     ReactGA.event({
       category: 'reducer',
@@ -49,6 +51,8 @@ const StateProvider = ({ children }) => {
     case 'fetchDataFailure':
       return { ...state, error: action.payload, loading: false }
     case 'tooglePrefersDarkMode':
+      console.log('TOGGLE TOGGLE')
+      setDarkMode(!state.prefersDarkMode)
       return { ...state, prefersDarkMode: !state.prefersDarkMode }
     case TOGGLE_FILTER:
       return {
@@ -60,12 +64,7 @@ const StateProvider = ({ children }) => {
     }
   }, initialState)
 
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
-
   useEffect(() => {
-    if (prefersDarkMode !== initialState.prefersDarkMode) {
-      dispatch({ type: 'tooglePrefersDarkMode' })
-    }
     dispatch({
       type: 'fetchData',
     })
@@ -82,7 +81,7 @@ const StateProvider = ({ children }) => {
           dispatch({ type: 'fetchDataFailure', payload: e })
         })
     }
-  }, [dispatch, prefersDarkMode])
+  }, [dispatch])
   return <Provider value={{ state, dispatch }}>{children}</Provider>
 }
 
